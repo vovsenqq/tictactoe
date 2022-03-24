@@ -8,7 +8,7 @@ using std::endl;
 using std::cin;
 using std::string;
 
-
+//########################################################################################
 void print_board(vector<int> board) {
     system("cls");
     vector<char> convert_values(vector<int> board);
@@ -58,7 +58,29 @@ vector<int> gen_board(int size) {
 }
 
 
-bool checkwin(vector<int> board) {
+vector<char> convert_values(vector<int> board) {
+    int len_board = board.size();
+    vector<char> n_board;
+    for (int i = 0; i < len_board; i++) {
+        if (board[i] == 0) {
+            n_board.push_back(' ');
+        } else if (board[i] == 1) {
+            n_board.push_back('X');
+        } else if (board[i] == -1) {
+            n_board.push_back('O');
+        }
+    }
+    return n_board;
+}
+
+
+void make_move(vector<int> &board, int pos, int turn) {
+    board[pos] = turn;
+}
+//########################################################################################
+
+
+int checkwin(vector<int> board) {
     int len_board = board.size();
     int size = sqrt(len_board);
     vector<vector<int> > res;
@@ -91,14 +113,20 @@ bool checkwin(vector<int> board) {
         tmp.push_back(board[i]);
     }
     res.push_back(tmp);
+    tmp.clear();
 
     for (int i = 0; i < size * 2 + 2; i++) {
 	    if (std::equal(res[i].begin() + 1, res[i].end(), res[i].begin()) && res[i][0] != 0) {
-	        return true;
+	        if (res[i][0] == 1) {
+            return 10;
+            }
+            else {
+                return -10;
+            }
 	    }
     }
 
-    return false;
+    return 0;
 }
 
 
@@ -119,27 +147,6 @@ vector<vector<int> > gen_boards(vector<int> board, int turn) {
 }
 
 
-vector<char> convert_values(vector<int> board) {
-    int len_board = board.size();
-    vector<char> n_board;
-    for (int i = 0; i < len_board; i++) {
-        if (board[i] == 0) {
-            n_board.push_back(' ');
-        } else if (board[i] == 1) {
-            n_board.push_back('X');
-        } else if (board[i] == -1) {
-            n_board.push_back('O');
-        }
-    }
-    return n_board;
-}
-
-
-void make_move(vector<int> &board, int pos, int turn) {
-    board[pos] = turn;
-}
-
-
 bool isMovesLeft(vector<int> board) {
     int len_board = board.size();
     for (int i = 0; i < len_board; i++) {
@@ -153,10 +160,48 @@ bool isMovesLeft(vector<int> board) {
 
 
 int minimax(vector<int> board, bool maximizingPlayer) {
-    if (checkwin(board)) {
-        
+    int score = checkwin(board);
+    if (score == 10) {return score;}
+    if (score == -10) {return score;}
+    if (!isMovesLeft) {return 0;}
+
+
+    if (maximizingPlayer) {
+        vector<vector<int> > child = gen_boards(board, -1);
+        int zxc = child.size();
+        int best = -1000;
+        for (int i = 0; i < zxc; i++) {
+            best = std::max(best, minimax(child[i], false));
+        }
+        return best;
+    } else {
+        vector<vector<int> > child = gen_boards(board, 1);
+        int zxc = child.size();
+        int best = 1000;
+        for (int i = 0; i < zxc; i++) {
+            best = std::min(best, minimax(child[i], true));
+        }
+        return best;
     }
-    return 1;
+}
+
+
+int findBestAiMove(vector<int> board) {
+    int len_board = board.size();
+    int best = 1000;
+    int bebra = 0;
+    for (int i = 0; i < len_board; i++){
+           if (board[i] == 0) {
+               board[i] = -1;
+               int val = minimax(board, false);
+               board[i] = 0;
+               if (val < best) {
+                   best = val;
+                   bebra = i;
+               }
+           }
+        }
+    return bebra;
 }
 
 
@@ -170,15 +215,18 @@ int main() {
         if (board[asd] == 0) {
             make_move(board, asd, 1);
             print_board(board);
-            if (checkwin(board)) {
+            if (checkwin(board) == 10) {
                 cout << "You win!";
                 break;
             }
-            minimax(board, 1);
-            if (checkwin(board)) {
+            make_move(board, findBestAiMove(board), -1);
+            print_board(board);
+            if (checkwin(board) == -10) {
                 cout << "You loose";
+                break;
             }
         }
+        
     }
     
     return 1;
