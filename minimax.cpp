@@ -80,7 +80,7 @@ void make_move(vector<int> &board, int pos, int turn) {
 //########################################################################################
 
 
-int checkwin(vector<int> board) {
+int evaluation(vector<int> board) {    //bad realization
     int len_board = board.size();
     int size = sqrt(len_board);
     vector<vector<int> > res;
@@ -132,7 +132,6 @@ int checkwin(vector<int> board) {
 
 vector<vector<int> > gen_boards(vector<int> board, int turn) {
     int len_board = board.size();
-    int size = sqrt(len_board);
     vector<vector<int> > res;
     vector<int> tmp;
     for (int i = 0; i < len_board; i++) {
@@ -152,36 +151,34 @@ bool isMovesLeft(vector<int> board) {
     for (int i = 0; i < len_board; i++) {
         if (board[i] == 0) {
             return 1;
-        } else {
-            return 0;
         }
     }
+    return 0;
 }
 
 
 int minimax(vector<int> board, bool maximizingPlayer) {
-    int score = checkwin(board);
+    int score = evaluation(board);
     if (score == 10) {return score;}
     if (score == -10) {return score;}
-    if (!isMovesLeft) {return 0;}
-
+    if (isMovesLeft(board) == false) {return 0;}
 
     if (maximizingPlayer) {
-        vector<vector<int> > child = gen_boards(board, -1);
-        int zxc = child.size();
-        int best = -1000;
-        for (int i = 0; i < zxc; i++) {
-            best = std::max(best, minimax(child[i], false));
+        int maxEval = -1000;
+        vector<vector<int> > child_pos = gen_boards(board, 1);
+        int len_pos_moves = child_pos.size();
+        for (int i = 0; i < len_pos_moves; i++) {
+            maxEval = std::max(maxEval, minimax(child_pos[i], false));
         }
-        return best;
+        return maxEval;
     } else {
-        vector<vector<int> > child = gen_boards(board, 1);
-        int zxc = child.size();
-        int best = 1000;
-        for (int i = 0; i < zxc; i++) {
-            best = std::min(best, minimax(child[i], true));
+        int minEval = 1000;
+        vector<vector<int> > child_pos = gen_boards(board, -1);
+        int len_pos_moves = child_pos.size();
+        for (int i = 0; i < len_pos_moves; i++) {
+            minEval = std::min(minEval, minimax(child_pos[i], true));
         }
-        return best;
+        return minEval;
     }
 }
 
@@ -190,10 +187,10 @@ int findBestAiMove(vector<int> board) {
     int len_board = board.size();
     int best = 1000;
     int bebra = 0;
-    for (int i = 0; i < len_board; i++){
+    for (int i = 0; i < len_board; i++) {
            if (board[i] == 0) {
                board[i] = -1;
-               int val = minimax(board, false);
+               int val = minimax(board, true);
                board[i] = 0;
                if (val < best) {
                    best = val;
@@ -215,19 +212,28 @@ int main() {
         if (board[asd] == 0) {
             make_move(board, asd, 1);
             print_board(board);
-            if (checkwin(board) == 10) {
+            if (evaluation(board) == 10) {
                 cout << "You win!";
                 break;
             }
-            make_move(board, findBestAiMove(board), -1);
-            print_board(board);
-            if (checkwin(board) == -10) {
-                cout << "You loose";
-                break;
-            }
+        }
+
+        if (!isMovesLeft(board)) {
+            cout << "Draw!";
+            break;
         }
         
+        make_move(board, findBestAiMove(board), -1);
+        print_board(board);
+        if (evaluation(board) == -10) {
+            cout << "You loose";
+            break;
+           }
+        if (!isMovesLeft(board)) {
+            cout << "Draw!";
+            break;
+        }
     }
-    
+
     return 1;
 }
